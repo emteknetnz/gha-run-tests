@@ -34,7 +34,7 @@ inputs:
     default: false
   doclinting:
     type: boolean
-    default: true
+    default: false
 
 runs:
   using: composite
