@@ -32,3 +32,4 @@ default:
       browser_name: chrome
     SilverStripe\BehatExtension\Extension:
       screenshot_path: '%paths.base%/artifacts/screenshots'
+      is_ci: true
