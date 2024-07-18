@@ -23,6 +23,10 @@ inputs:
     type: string
     required: false
     default: ''
+  endtoend_tags:
+    type: string
+    required: false
+    default: ''
   js:
     type: boolean
     default: false
@@ -46,6 +50,7 @@ runs:
         PHPUNIT_SUITE: ${{ inputs.phpunit_suite }}
         ENDTOEND_SUITE: ${{ inputs.endtoend_suite }}
         ENDTOEND_CONFIG: ${{ inputs.endtoend_config }}
+        ENDTOEND_TAGS: ${{ inputs.endtoend_config }}
       run: |
         if ! [[ "$PHPUNIT_SUITE" =~ ^[a-zA-Z0-9_\-]*$ ]]; then
           echo "Invalid input for phpunit_suite"
@@ -57,6 +62,10 @@ runs:
         fi
         if ! [[ "$ENDTOEND_CONFIG" =~ ^[a-zA-Z0-9_\./\-]*$ ]]; then
           echo "Invalid input for endtoend_config"
+          exit 1
+        fi
+        if ! [[ "$ENDTOEND_TAGS" =~ ^[a-zA-Z0-9,]*$ ]]; then
+          echo "Invalid input for endtoend_tags"
           exit 1
         fi
 
@@ -114,6 +123,7 @@ runs:
       env:
         ENDTOEND_SUITE: ${{ inputs.endtoend_suite }}
         ENDTOEND_CONFIG: ${{ inputs.endtoend_config }}
+        ENDTOEND_TAGS: ${{ inputs.endtoend_tags }}
       run: |
         echo "Running behat"
         BEHAT_CONFIG="behat.yml"
@@ -144,9 +154,17 @@ runs:
         # start chromedriver as a background process
         nohup sh -c "chromedriver" > /dev/null 2>&1 &
         if [[ "$ENDTOEND_SUITE" != "root" ]]; then
-          vendor/bin/behat --colors --strict --config __behat.yml "$ENDTOEND_SUITE"
+          if [[ $ENDTOEND_TAGS != "" ]]; then
+            vendor/bin/behat --colors --strict --config __behat.yml "$ENDTOEND_SUITE" --tags="$ENDTOEND_TAGS"
+          else
+            vendor/bin/behat --colors --strict --config __behat.yml "$ENDTOEND_SUITE"
+          fi
         else
-          vendor/bin/behat --colors --strict --config __behat.yml
+          if [[ $ENDTOEND_TAGS != "" ]]; then
+            vendor/bin/behat --colors --strict --config __behat.yml --tags="$ENDTOEND_TAGS"
+          else
+            vendor/bin/behat --colors --strict --config __behat.yml
+          fi
         fi
         echo "Passed"
 
