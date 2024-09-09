@@ -77,11 +77,19 @@ runs:
         PHPUNIT_SUITE: ${{ inputs.phpunit_suite }}
       run: |
         PHPUNIT_OPTIONS="--colors=always"
-        [[ $(vendor/bin/phpunit --version) =~ ([0-9]+)\.[0-9]+\.[0-9] ]]
-        PHPUNIT_MAJOR_VERSION=${BASH_REMATCH[1]}
-        if (( "$PHPUNIT_MAJOR_VERSION" <= 9 )); then
+        [[ $(vendor/bin/phpunit --version) =~ ([0-9]+)\.([0-9]+)\.([0-9]+) ]]
+        MAJOR=${BASH_REMATCH[1]}
+        MINOR=${BASH_REMATCH[2]}
+        PATCH=${BASH_REMATCH[3]}
+        INT_VERSION=$(( $MAJOR * 10000 + $MINOR * 100 + $PATCH ))
+        if (( "$INT_VERSION" < 100000 )); then
           # --verbose option removed in PHPUnit 10, as it's now always verbose
           PHPUNIT_OPTIONS="$PHPUNIT_OPTIONS --verbose"
+        fi
+        # --display-phpunit-deprecations option added in PHPUnit 11.3.3
+        # deprecations will display by default in PHPUnit <= 11.3.2
+        if (( "$INT_VERSION" >= 110303 )); then
+          PHPUNIT_OPTIONS="$PHPUNIT_OPTIONS --display-phpunit-deprecations"
         fi
         if [[ "$PHPUNIT_SUITE" != "all" ]] && [[ "$PHPUNIT_SUITE" != "" ]]; then
           PHPUNIT_OPTIONS="$PHPUNIT_OPTIONS --testsuite "$PHPUNIT_SUITE""
