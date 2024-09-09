@@ -76,7 +76,13 @@ runs:
       env:
         PHPUNIT_SUITE: ${{ inputs.phpunit_suite }}
       run: |
-        PHPUNIT_OPTIONS="--verbose --colors=always"
+        PHPUNIT_OPTIONS="--colors=always"
+        [[ $(vendor/bin/phpunit --version) =~ ([0-9]+)\.[0-9]+\.[0-9] ]]
+        PHPUNIT_MAJOR_VERSION=${BASH_REMATCH[1]}
+        if (( "$PHPUNIT_MAJOR_VERSION" <= 9 )); then
+          # --verbose option removed in PHPUnit 10, as it's now always verbose
+          PHPUNIT_OPTIONS="$PHPUNIT_OPTIONS --verbose"
+        fi
         if [[ "$PHPUNIT_SUITE" != "all" ]] && [[ "$PHPUNIT_SUITE" != "" ]]; then
           PHPUNIT_OPTIONS="$PHPUNIT_OPTIONS --testsuite "$PHPUNIT_SUITE""
         fi
