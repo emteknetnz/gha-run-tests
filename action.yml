@@ -97,6 +97,17 @@ runs:
         if [[ "${{ inputs.phpunit_fail_on_warning }}" == "true" ]]; then
           PHPUNIT_OPTIONS="$PHPUNIT_OPTIONS --fail-on-warning"
         fi
+        # --exclude-filter added in PHPUnit 11
+        if (( "$INT_VERSION" >= 110300 )); then
+          # Special filtering for silverstripe/framework testsuites
+          if [[ "$PHPUNIT_SUITE" == "framework-orm" ]]; then
+            PHPUNIT_OPTIONS="$PHPUNIT_OPTIONS --filter /ORM/"
+          fi
+          if [[ "$PHPUNIT_SUITE" == "framework-core" ]]; then
+            PHPUNIT_OPTIONS="$PHPUNIT_OPTIONS --exclude-filter /ORM/"
+          fi
+        fi
+        echo "PHPUNIT_OPTIONS is $PHPUNIT_OPTIONS"
         vendor/bin/phpunit $PHPUNIT_OPTIONS
         echo "Passed"
 
@@ -195,6 +206,13 @@ runs:
           echo "Missing .nvmrc"
           exit 1
         fi
+        # Set nvmdir explicitly before installation. Default dir doesn't work for some reason.
+        export NVM_DIR="${HOME}/.nvm"
+        # Installation fails if install dir is specified but doesn't exist
+        if ! [[ -d "$NVM_DIR" ]]; then
+          echo "NVM_DIR '$NVM_DIR' doesn't exist - creating it now"
+          mkdir $NVM_DIR
+        fi
         # Remove any sneaky attempts to put __install-nvm.sh into pull-requests
         if [[ -f __install-nvm.sh ]]; then
           rm __install-nvm.sh
@@ -207,9 +225,8 @@ runs:
           echo "Error while installing nvm"
           exit 1
         fi
-        export NVM_DIR="$HOME/.nvm"
         # this loads nvm into the current terminal
-        [[ -s "$NVM_DIR/nvm.sh" ]] && \. "$NVM_DIR/nvm.sh"
+        [[ -s "$NVM_DIR/nvm.sh" ]] && \. "$NVM_DIR/nvm.sh" --no-use
         ADMIN_NPM_VERSION=
         if [[ -d vendor/silverstripe/admin ]]; then
           cd vendor/silverstripe/admin
