@@ -42,6 +42,10 @@ inputs:
 
 runs:
   using: composite
+  env:
+    # A list of allowed software licesnses that are permissive
+    # See https://spdx.org/licenses/ for a list of SPDX identifiers
+    SPDX_ALLOWED_DELIMITED: 'MIT;MIT-0;ISC;0BSD;BSD-2-Clause;BSD-3-Clause;Apache-2.0;Python-2.0;CC0-1.0;CC-BY-3.0;CC-BY-4.0;Public Domain;Unlicense'
   steps:
 
     - name: Validate inputs
@@ -284,10 +288,6 @@ runs:
         # Validate licenses of all dependencies are permissive
         echo "Checking licenses of all dependencies"
         npm install -g license-checker
-        # See https://www.npmjs.com/package/license-checker for command line options
-        # See https://spdx.org/licenses/ for a list of SPDX identifiers
-        # Allowed licenses are permissive for downstream commercial use i.e. not copyleft
-        SPDX_ALLOWED_DELIMITED="MIT;MIT-0;ISC;0BSD;BSD-2-Clause;BSD-3-Clause;Apache-2.0;Python-2.0;CC0-1.0;CC-BY-3.0;CC-BY-4.0;Public Domain;Unlicense"
         license-checker --production --unknown --out /dev/null --onlyAllow "$SPDX_ALLOWED_DELIMITED"
         # If we get to this point, everything was successful
         echo "Passed"
@@ -314,9 +314,9 @@ runs:
         # Validate licenses of all dependencies are permissive
         echo "Checking licenses of all dependencies"
         composer global require madewithlove/license-checker-php
-        SPDX_ALLOWED_DELIMITED="MIT;MIT-0;ISC;0BSD;BSD-2-Clause;BSD-3-Clause;Apache-2.0;Python-2.0;CC0-1.0;CC-BY-3.0;CC-BY-4.0;Public Domain;Unlicense"
+        COMPOSER_GLOBAL_HOME=$(composer -q -n config --global home)
         SPDX_ALLOWED_LIST=$(echo $SPDX_ALLOWED_DELIMITED | tr ";" "\n")
-        SPDX_USED_LIST=$(license-checker --no-dev used)
+        SPDX_USED_LIST=$($COMPOSER_GLOBAL_HOME/vendor/bin/license-checker --no-dev used)
         for SPDX_USED in $SPDX_USED_LIST; do
           IS_ALLOWED=0
           for SPDX_ALLOWED in $SPDX_ALLOWED_LIST; do
