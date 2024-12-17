@@ -281,12 +281,10 @@ runs:
           echo "Running yarn lint"
           yarn run lint
         fi
-        # Validate licenses of all dependencies are permissive
+                # Validate licenses of all NPM dependencies are allowed
         echo "Checking licenses of all dependencies"
         npm install -g license-checker
-        # A list of allowed software licesnses that are permissive - see https://spdx.org/licenses/ for a list of SPDX identifiers
-        # IMPORTANT! If this is updated also update the same variable in the "Run PHP linting" step
-        SPDX_ALLOWED_DELIMITED="MITx;MIT-0;ISC;0BSD;BSD-2-Clause;BSD-3-Clause;Apache-2.0;Python-2.0;CC0-1.0;CC-BY-3.0;CC-BY-4.0;Public Domain;Unlicense"
+        SPDX_ALLOWED_DELIMITED=cat ${{ github.action_path }}/allowed-spdx-delimited.txt | tr -d '\n'
         license-checker --production --unknown --out /dev/null --onlyAllow "$SPDX_ALLOWED_DELIMITED"
         # If we get to this point, everything was successful
         echo "Passed"
@@ -310,17 +308,33 @@ runs:
           echo "Running PHPStan"
           vendor/bin/phpstan analyse
         fi
-
-        echo "GITHUB_ACTION_PATH is ${GITHUB_ACTION_PATH}"
-        echo "GITHUB_WORKSPACE is ${GITHUB_WORKSPACE}"
-        
-        # Validate licenses of all dependencies are permissive
+        # Validate licenses of all composer dependencies are allowed
         echo "Checking licenses of all dependencies"
         composer global require madewithlove/license-checker
         COMPOSER_GLOBAL_HOME=$(composer -q -n config --global home)
-        # A list of allowed software licesnses that are permissive - see https://spdx.org/licenses/ for a list of SPDX identifiers
-        # IMPORTANT! If this is updated also update the same variable in the "Run JS tests" step
-        SPDX_ALLOWED_DELIMITED="MITx;MIT-0;ISC;0BSD;BSD-2-Clause;BSD-3-Clause;Apache-2.0;Python-2.0;CC0-1.0;CC-BY-3.0;CC-BY-4.0;Public Domain;Unlicense"
+        SPDX_ALLOWED_DELIMITED=cat ${{ github.action_path }}/allowed-spdx-delimited.txt | tr -d '\n'
+        # Update the licenses in the installed.json file to be sorted so that allowed SPDX identifier
+        # are at the top of the list. This is done because the license-checker will only check the first SPDX.
+        SPDX_ALLOWED_DELIMITED=$SPDX_ALLOWED_DELIMITED php -r '
+          $allowedSpdxDelimted = getenv("SPDX_ALLOWED_DELIMITED");
+          $allowedSpdx = explode(";", $allowedSpdxDelimted);
+          $filename = "vendor/composer/installed.json";
+          $contents = file_get_contents("vendor/composer/installed.json");
+          $json = json_decode($contents, true);
+          foreach ($json["packages"] as &$package) {
+            # A handful of silverstripe packages do not have a license field, though we don't need to check them
+            if (str_starts_with($package["name"], "silverstripe/")) {
+              continue;
+            }
+            if (!isset($package["license"])) {
+              throw new Exception("License field missing for package " . $package["name"]);
+            }
+            usort($package["license"], fn ($spdx) => in_array($spdx, $allowedSpdx) ? -1 : 1);
+          }
+          file_put_contents($filename, json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        '
+        # Translate " " to "__" (and back again later) for any SPDX that has a space in it, such as "Public Domain"
+        # Otherwise the bash for loop will split on the space
         SPDX_ALLOWED_LIST=$(echo $SPDX_ALLOWED_DELIMITED | tr " " "__" | tr ";" "\n")
         SPDX_USED_LIST=$($COMPOSER_GLOBAL_HOME/vendor/bin/license-checker --no-dev used)
         for SPDX_USED in $SPDX_USED_LIST; do
@@ -333,7 +347,7 @@ runs:
             fi
           done
           if [[ $IS_ALLOWED == 0 ]]; then
-            echo "License $SPDX_USED found in composer dependecies is not allowed"
+            echo "License $SPDX_USED found in composer dependencies is not allowed. Check vendor/composer/installed.json"
             exit 1
           fi
         done
