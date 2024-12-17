@@ -286,7 +286,7 @@ runs:
         npm install -g license-checker
         # See https://spdx.org/licenses/ for a list of SPDX identifiers
         # See https://www.npmjs.com/package/license-checker for command line options
-        PERMISSIVE_LICENSES='ISC;0BSD;BSD-2-Clause;BSD-3-Clause;Apache-2.0;Python-2.0;CC0-1.0;CC-BY-3.0;CC-BY-4.0;MIT AND CC-BY-3.0;Public Domain;Unlicense'
+        PERMISSIVE_LICENSES='MIT,MIT-0,ISC;0BSD;BSD-2-Clause;BSD-3-Clause;Apache-2.0;Python-2.0;CC0-1.0;CC-BY-3.0;CC-BY-4.0;MIT AND CC-BY-3.0;Public Domain;Unlicense'
         license-checker --production --unknown --out /dev/null --onlyAllow "$PERMISSIVE_LICENSES"
         # If we get to this point, everything was successful
         echo "Passed"
