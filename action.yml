@@ -310,6 +310,10 @@ runs:
           echo "Running PHPStan"
           vendor/bin/phpstan analyse
         fi
+
+        echo "GITHUB_ACTION_PATH is ${GITHUB_ACTION_PATH}"
+        echo "GITHUB_WORKSPACE is ${GITHUB_WORKSPACE}"
+        
         # Validate licenses of all dependencies are permissive
         echo "Checking licenses of all dependencies"
         composer global require madewithlove/license-checker
@@ -391,3 +395,4 @@ runs:
         if [[ -f __install-nvm.sh ]]; then
           rm __install-nvm.sh
         fi
+
