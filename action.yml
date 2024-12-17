@@ -322,7 +322,7 @@ runs:
           $contents = file_get_contents("vendor/composer/installed.json");
           $json = json_decode($contents, true);
           foreach ($json["packages"] as &$package) {
-            # A handful of silverstripe packages do not have a license field, though we don't need to check them
+            # A handful of silverstripe packages do not have a license field, though we do not need to check them
             if (str_starts_with($package["name"], "silverstripe/")) {
               continue;
             }
