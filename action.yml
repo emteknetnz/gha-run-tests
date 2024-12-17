@@ -282,6 +282,7 @@ runs:
           yarn run lint
         fi
         # Validate licenses of all dependencies are permissive
+        echo "Check licenses of all dependencies"
         npm install -g license-checker
         # See https://spdx.org/licenses/ for a list of SPDX identifiers
         # See https://www.npmjs.com/package/license-checker for command line options
