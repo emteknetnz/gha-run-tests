@@ -43,9 +43,6 @@ inputs:
 runs:
   using: composite
   env:
-    # A list of allowed software licesnses that are permissive
-    # See https://spdx.org/licenses/ for a list of SPDX identifiers
-    SPDX_ALLOWED_DELIMITED: 'MIT;MIT-0;ISC;0BSD;BSD-2-Clause;BSD-3-Clause;Apache-2.0;Python-2.0;CC0-1.0;CC-BY-3.0;CC-BY-4.0;Public Domain;Unlicense'
   steps:
 
     - name: Validate inputs
@@ -288,6 +285,9 @@ runs:
         # Validate licenses of all dependencies are permissive
         echo "Checking licenses of all dependencies"
         npm install -g license-checker
+        # A list of allowed software licesnses that are permissive - see https://spdx.org/licenses/ for a list of SPDX identifiers
+        # IMPORTANT! If this is updated also update the same variable in the "Run PHP linting" step
+        SPDX_ALLOWED_DELIMITED: 'MIT;MIT-0;ISC;0BSD;BSD-2-Clause;BSD-3-Clause;Apache-2.0;Python-2.0;CC0-1.0;CC-BY-3.0;CC-BY-4.0;Public Domain;Unlicense'
         license-checker --production --unknown --out /dev/null --onlyAllow "$SPDX_ALLOWED_DELIMITED"
         # If we get to this point, everything was successful
         echo "Passed"
@@ -315,6 +315,9 @@ runs:
         echo "Checking licenses of all dependencies"
         composer global require madewithlove/license-checker-php
         COMPOSER_GLOBAL_HOME=$(composer -q -n config --global home)
+        # A list of allowed software licesnses that are permissive - see https://spdx.org/licenses/ for a list of SPDX identifiers
+        # IMPORTANT! If this is updated also update the same variable in the "Run JS tests" step
+        SPDX_ALLOWED_DELIMITED: 'MIT;MIT-0;ISC;0BSD;BSD-2-Clause;BSD-3-Clause;Apache-2.0;Python-2.0;CC0-1.0;CC-BY-3.0;CC-BY-4.0;Public Domain;Unlicense'
         SPDX_ALLOWED_LIST=$(echo $SPDX_ALLOWED_DELIMITED | tr " " "__" | tr ";" "\n")
         SPDX_USED_LIST=$($COMPOSER_GLOBAL_HOME/vendor/bin/license-checker --no-dev used)
         for SPDX_USED in $SPDX_USED_LIST; do
