@@ -281,10 +281,10 @@ runs:
           echo "Running yarn lint"
           yarn run lint
         fi
-                # Validate licenses of all NPM dependencies are allowed
+        # Validate licenses of all NPM dependencies are allowed
         echo "Checking licenses of all dependencies"
         npm install -g license-checker
-        SPDX_ALLOWED_DELIMITED=cat ${{ github.action_path }}/allowed-spdx-delimited.txt | tr -d '\n'
+        SPDX_ALLOWED_DELIMITED=$(cat ${{ github.action_path }}/allowed-spdx-delimited.txt | tr -d '\n')
         license-checker --production --unknown --out /dev/null --onlyAllow "$SPDX_ALLOWED_DELIMITED"
         # If we get to this point, everything was successful
         echo "Passed"
@@ -312,7 +312,7 @@ runs:
         echo "Checking licenses of all dependencies"
         composer global require madewithlove/license-checker
         COMPOSER_GLOBAL_HOME=$(composer -q -n config --global home)
-        SPDX_ALLOWED_DELIMITED=cat ${{ github.action_path }}/allowed-spdx-delimited.txt | tr -d '\n'
+        SPDX_ALLOWED_DELIMITED=$(cat ${{ github.action_path }}/allowed-spdx-delimited.txt | tr -d '\n')
         # Update the licenses in the installed.json file to be sorted so that allowed SPDX identifier
         # are at the top of the list. This is done because the license-checker will only check the first SPDX.
         SPDX_ALLOWED_DELIMITED=$SPDX_ALLOWED_DELIMITED php -r '
