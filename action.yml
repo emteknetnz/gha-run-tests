@@ -282,12 +282,13 @@ runs:
           yarn run lint
         fi
         # Validate licenses of all dependencies are permissive
-        echo "Check licenses of all dependencies"
+        echo "Checking licenses of all dependencies"
         npm install -g license-checker
-        # See https://spdx.org/licenses/ for a list of SPDX identifiers
         # See https://www.npmjs.com/package/license-checker for command line options
-        PERMISSIVE_LICENSES='MIT,MIT-0,ISC;0BSD;BSD-2-Clause;BSD-3-Clause;Apache-2.0;Python-2.0;CC0-1.0;CC-BY-3.0;CC-BY-4.0;MIT AND CC-BY-3.0;Public Domain;Unlicense'
-        license-checker --production --unknown --out /dev/null --onlyAllow "$PERMISSIVE_LICENSES"
+        # See https://spdx.org/licenses/ for a list of SPDX identifiers
+        # Allowed licenses are permissive for downstream commercial use i.e. not copyleft
+        ALLOWED_LICENSES='MIT;MIT-0,ISC;0BSD;BSD-2-Clause;BSD-3-Clause;Apache-2.0;Python-2.0;CC0-1.0;CC-BY-3.0;CC-BY-4.0;MIT AND CC-BY-3.0;Public Domain;Unlicense'
+        license-checker --production --unknown --out /dev/null --onlyAllow "$ALLOWED_LICENSES"
         # If we get to this point, everything was successful
         echo "Passed"
 
@@ -310,6 +311,26 @@ runs:
           echo "Running PHPStan"
           vendor/bin/phpstan analyse
         fi
+        # Validate licenses of all dependencies are permissive
+        echo "Checking licenses of all dependencies"
+        composer global require madewithlove/license-checker-php
+        SPDX_ALLOWED_DELIMITED="MIT;MIT-0;ISC;0BSD;BSD-2-Clause;BSD-3-Clause;Apache-2.0;Python-2.0;CC0-1.0;CC-BY-3.0;CC-BY-4.0;Public Domain;Unlicense"
+        SPDX_ALLOWED_LIST=$(echo $SPDX_ALLOWED_DELIMITED | tr ";" "\n")
+        SPDX_USED_LIST=$(license-checker --no-dev used)
+        for SPDX_USED in $SPDX_USED_LIST; do
+          IS_ALLOWED=0
+          for SPDX_ALLOWED in $SPDX_ALLOWED_LIST; do
+            if [[ $SPDX_USED == $SPDX_ALLOWED ]]; then
+              IS_ALLOWED=1
+              break
+            fi
+          done
+          if [[ $IS_ALLOWED == 0 ]]; then
+            echo "License $SPDX_USED found in composer dependecies is not allowed"
+            exit 1
+          fi
+        done
+        # If we get to this point, everything was successful
         echo "Passed"
 
     - name: "Run PHP coverage"
