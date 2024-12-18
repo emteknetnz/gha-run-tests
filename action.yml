@@ -333,14 +333,14 @@ runs:
           }
           file_put_contents($filename, json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         '
-        # Translate " " to "__" (and back again later) for any SPDX that has a space in it, such as "Public Domain"
+        # Translate " " to "_" (and back again later) for any SPDX that has a space in it, such as "Public Domain"
         # Otherwise the bash for loop will split on the space
-        SPDX_ALLOWED_LIST=$(echo $SPDX_ALLOWED_DELIMITED | tr " " "__" | tr ";" "\n")
+        SPDX_ALLOWED_LIST=$(echo $SPDX_ALLOWED_DELIMITED | tr " " "_" | tr ";" "\n")
         SPDX_USED_LIST=$($COMPOSER_GLOBAL_HOME/vendor/bin/license-checker --no-dev used)
         for SPDX_USED in $SPDX_USED_LIST; do
           IS_ALLOWED=0
           for SPDX_ALLOWED in $SPDX_ALLOWED_LIST; do
-            SPDX_ALLOWED=$(echo $SPDX_ALLOWED | tr "__" " ")
+            SPDX_ALLOWED=$(echo $SPDX_ALLOWED | tr "_" " ")
             if [[ $SPDX_USED == $SPDX_ALLOWED ]]; then
               IS_ALLOWED=1
               break
